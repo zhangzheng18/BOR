@@ -1,0 +1,171 @@
+# LSGEmu deployment configuration template.
+#
+# This file records external tools, datasets, and environment switches needed
+# to reproduce the local workflow.  The current code mainly reads environment
+# variables plus LLM.yaml/run profiles, so treat this file as the canonical
+# deployment checklist and source for generating those environment variables.
+# Do not commit API keys or machine-private secrets here.
+
+schema: lsgemu.deployment_config.v1
+
+project:
+  # Root containing srcv4, unicorn/, testcase/, etc.
+  # Example on the original workstation: /opt/artifact/artifact
+  root: ${LSGEMU_PROJECT_ROOT}
+  srcv4_root: ${LSGEMU_SRCV4_ROOT}
+  cache_dir: ${LSGEMU_STATIC_CACHE_DIR:-${LSGEMU_SRCV4_ROOT}/.lsgemu_cache}
+  run_output_dir: ${LSGEMU_RUN_OUTPUT_DIR:-${LSGEMU_SRCV4_ROOT}/.lsgemu_runs}
+  temp_dir: ${TMPDIR:-/tmp}
+
+python:
+  # Recommended: Python 3.10 or 3.11.  The original experiments used both
+  # /usr/bin/python3 and Conda/virtualenv interpreters depending on campaign.
+  executable: ${PYTHON:-python3}
+  virtualenv: ${VIRTUAL_ENV:-}
+  pythonpath:
+    - ${LSGEMU_SRCV4_ROOT}
+    - ${LSGEMU_UNICORN_PYTHON_BINDINGS:-}
+
+ghidra:
+  enabled: true
+  # Required by lsgemu/analysis/disasm/ghidra_disassembler_with_bb.py.
+  # Must contain support/analyzeHeadless.
+  install_dir: ${GHIDRA_INSTALL_DIR}
+  analyze_headless: ${GHIDRA_ANALYZE_HEADLESS:-${GHIDRA_INSTALL_DIR}/support/analyzeHeadless}
+  # Ghidra 11.x/12.x generally requires Java 17+.
+  java_home: ${JAVA_HOME:-}
+  xdg_config_home: ${XDG_CONFIG_HOME:-/tmp/ghidra-xdg}
+  default_timeout_seconds: 600
+
+unicorn:
+  # LSGEmu can use pip's unicorn package or a local checked-out Unicorn build.
+  # runtime_bootstrap.py prefers ${LSGEMU_PROJECT_ROOT}/unicorn unless
+  # LSGEMU_USE_SYSTEM_UNICORN=1 is set.
+  use_system_unicorn: ${LSGEMU_USE_SYSTEM_UNICORN:-0}
+  local_python_bindings: ${LSGEMU_UNICORN_PYTHON_BINDINGS:-${LSGEMU_PROJECT_ROOT}/unicorn/bindings/python}
+  local_build_dir: ${LIBUNICORN_PATH:-${LSGEMU_PROJECT_ROOT}/unicorn/build}
+  shared_library: ${LSGEMU_UNICORN_SHARED_LIB:-${LSGEMU_PROJECT_ROOT}/unicorn/build/libunicorn.so.2}
+  ld_library_path_entry: ${LIBUNICORN_PATH:-${LSGEMU_PROJECT_ROOT}/unicorn/build}
+
+static_tools:
+  # Used for symbol/section/disassembly helpers and validation scripts.
+  nm_candidates:
+    - arm-none-eabi-nm
+    - llvm-nm
+    - nm
+  objdump_candidates:
+    - arm-none-eabi-objdump
+    - llvm-objdump
+    - objdump
+  readelf_candidates:
+    - arm-none-eabi-readelf
+    - readelf
+  strings_tool: strings
+
+angr:
+  # Optional.  Some legacy/static comparison utilities import angr/claripy/z3,
+  # but the main LSGEmu execution path does not require angr.
+  enabled: false
+  version_policy: optional
+
+llm:
+  enabled: ${LSGEMU_ENABLE_LLM:-auto}
+  # Existing code expects an LLM.yaml at project/srcv4 working root or project
+  # root.  This deployment config only documents where that file should live.
+  config_file: ${LSGEMU_LLM_CONFIG:-${LSGEMU_PROJECT_ROOT}/srcv4/LLM.yaml}
+  backend: openai_compatible
+  model: ${LSGEMU_LLM_MODEL:-qwen-plus}
+  base_url: ${OPENAI_BASE_URL:-}
+  api_key_env: OPENAI_API_KEY
+  request_timeout_seconds: 60
+  max_calls:
+    per_loop: ${LSGEMU_MAX_LLM_CALLS_PER_LOOP:-1}
+    deadlock_per_loop: ${LSGEMU_MAX_DEADLOCK_LLM_CALLS_PER_LOOP:-1}
+    branch_inference: ${LSGEMU_MAX_LLM_BRANCH_INFERENCE_CALLS:-0}
+
+svd:
+  # Optional CMSIS-SVD files for peripheral semantic profile hints.
+  # The code reads LSGEMU_SVD_PATHS or LSGEMU_SVD_PATH using os.pathsep.
+  paths_env: LSGEMU_SVD_PATHS
+  paths: []
+
+datasets:
+  # These paths are used by evaluation and validation scripts.  Keep them
+  # configurable so the artifact can be deployed outside the original machine.
+  elfmultifuzz_root: ${ELFMULTIFUZZ_ROOT:-/path/to/MCUdatabase/elfmultifuzz}
+  p2im_real_tests_root: ${P2IM_REAL_TESTS_ROOT:-${LSGEMU_PROJECT_ROOT}/testcase/real_tests}
+  manual_mcu_root: ${MANUAL_MCU_ROOT:-/path/to/MCU_bin_elf_single}
+  manual_mcu_selected_root: ${MANUAL_MCU_SELECTED_ROOT:-/path/to/mcu_type_firmware_selected}
+  fuzzware_soat_root: ${FUZZWARE_SOAT_ROOT:-/path/to/SOAT/fuzzware}
+  multifuzz_soat_root: ${MULTIFUZZ_SOAT_ROOT:-/path/to/SOAT/MultiFuzz}
+
+run_profile:
+  # `python lsgemu/lsgemu.py --run-profile <yaml>` applies only LSGEMU_*
+  # entries under this environment mapping and records a profile hash.
+  environment:
+    LSGEMU_CONSOLE_PROGRESS: "1"
+    LSGEMU_PROGRESS_INTERVAL_SECONDS: "600"
+    LSGEMU_PROGRESS_COVERAGE_LIST_MODE: "none"
+    LSGEMU_STATIC_CACHE_DIR: ${LSGEMU_STATIC_CACHE_DIR:-${LSGEMU_SRCV4_ROOT}/.lsgemu_cache}
+    LSGEMU_LOOP_EXIT_HINTS: "1"
+    LSGEMU_ENABLE_MEMORY_WAIT_CLASSIFIER: "1"
+    LSGEMU_FAST_LOOP_ANALYSIS: "1"
+    LSGEMU_BRANCH_DEP_SNAPSHOT_MIN: "16"
+    LSGEMU_BRANCH_DEP_SNAPSHOT_MAX: "64"
+    LSGEMU_TARGETED_DIRECT_ROOT_FOCUS: "1"
+    LSGEMU_TARGETED_SWITCH_ROOT_SNAPSHOT_REPLAY: "1"
+    LSGEMU_TARGETED_SWITCH_ROOT_BUDGET: "64"
+    # Periodically finalize dead Unicorn callback cycles and return free glibc
+    # pages. Set either value to 0 to disable; exploration policy is unchanged.
+    # Spill serialized external snapshot state to a per-attempt directory below
+    # the run output. This changes resource placement, not replay contents.
+    # Set to 0 only for an all-RAM performance/control run.
+    LSGEMU_SNAPSHOT_DISK_BACKING: "1"
+    # Content-interned RAM pages are normally a small resident set and are hot
+    # on every restore. Keep them in memory unless measurements show otherwise.
+    LSGEMU_SNAPSHOT_PAGE_DISK_BACKING: "0"
+    LSGEMU_SNAPSHOT_STATE_COMPRESSION: "1"
+    LSGEMU_SNAPSHOT_STATE_COMPRESSION_LEVEL: "1"
+    # Keep decoded snapshot graphs only during one restore. Set to 1 only when
+    # repeated replay latency is more important than long-run RSS.
+    LSGEMU_SNAPSHOT_STATE_CACHE_DECODED: "0"
+    # Loop classification consumes at most 200 BBs and 10 register samples.
+    # These windows preserve that evidence while bounding diagnostic history.
+    LSGEMU_LOOP_BB_HISTORY_LIMIT: "512"
+    LSGEMU_LOOP_REGISTER_HISTORY_LIMIT: "32"
+    LSGEMU_LOOP_MMIO_ACCESS_PC_LIMIT: "256"
+    LSGEMU_EMULATOR_BB_HISTORY_LIMIT: "8192"
+    LSGEMU_EXECUTION_TRACE_HISTORY_LIMIT: "8192"
+    LSGEMU_MMIO_ACCESS_HISTORY_LIMIT: "16384"
+    LSGEMU_MEMORY_ACCESS_HISTORY_LIMIT: "16384"
+    LSGEMU_ENHANCED_MMIO_HISTORY_LIMIT: "16384"
+    LSGEMU_REGISTER_TRACER_MMIO_HISTORY_LIMIT: "16384"
+    LSGEMU_STATIC_REACHABILITY_CACHE_MAX_BYTES: "134217728"
+    LSGEMU_TEMP_EMULATOR_GC_INTERVAL: "64"
+    LSGEMU_TEMP_EMULATOR_MALLOC_TRIM_INTERVAL: "64"
+    LSGEMU_TEMP_EMULATOR_RSS_TRIM_THRESHOLD_MIB: "256"
+    LSGEMU_TEMP_EMULATOR_GC_ON_PRESSURE: "1"
+
+evaluation:
+  default_rq1_minutes: 1440
+  default_rq2_minutes: 60
+  default_rq3_minutes: 30
+  safe_jobs_default: 1
+  scheduler:
+    # Size these values from measured long-run P90 RSS. The defaults reserve
+    # 16 GiB for the host and use a conservative bootstrap estimate until the
+    # scheduler observes real worker peaks.
+    max_safe_jobs: 8
+    initial_jobs: 2
+    ramp_seconds: 300
+    min_free_memory_gib: 16
+    per_job_memory_gib: 8
+    peak_multiplier: 1.25
+    max_swap_used_gib: 4
+    kill_below_free_memory_gib: 16
+    kill_above_swap_used_gib: 8
+
+crash_detection:
+  config_file: ${LSGEMU_CRASH_DETECTOR_CONFIG:-${LSGEMU_SRCV4_ROOT}/fuzzengine/crash_detector_config.example.json}
+  treat_unmapped_mmio_as_artifact: true
+  treat_unmapped_configured_memory_as_artifact: true

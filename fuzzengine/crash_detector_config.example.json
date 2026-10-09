@@ -1,0 +1,27 @@
+{
+  "crash_points": [
+    "0x08000100"
+  ],
+  "fault_handler_addrs": {
+    "HardFault": "0x08000100",
+    "MemManage": "0x08000104",
+    "BusFault": "0x08000108",
+    "UsageFault": "0x0800010c"
+  },
+  "code_ranges": [
+    ["0x08000000", "0x08100000"]
+  ],
+  "ram_ranges": [
+    ["0x20000000", "0x20100000"]
+  ],
+  "mmio_ranges": [
+    ["0x40000000", "0x60000000"],
+    ["0xe0000000", "0xe0100000"]
+  ],
+  "classify_timeouts_as_hangs": true,
+  "classify_max_instruction_as_hang": false,
+  "require_code_range_for_pc_crash": false,
+  "treat_unmapped_mmio_as_artifact": true,
+  "treat_unmapped_configured_memory_as_artifact": true,
+  "bucket_trace_tail": 8
+}

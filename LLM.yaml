@@ -1,0 +1,8 @@
+# LLM settings
+llm:
+  provider: "openai"  # 保持openai（兼容模式）
+  model: "qwen-plus"  # qwen-plus=3.5-plus，qwen-max=3-max
+  api_base: "https://dashscope.aliyuncs.com/compatible-mode/v1"  # 千问OpenAI兼容接口地址
+  api_key_env: "DASHSCOPE_API_KEY"
+  max_tokens: 4096
+  temperature: 0.7

@@ -1,0 +1,78 @@
+{
+  "benchmark_root": "/opt/artifact/benchmarks/drone_firmware",
+  "campaign": "formal-24h-drone",
+  "common_env": {
+    "AFL_I_DONT_CARE_ABOUT_MISSING_CRASHES": "1",
+    "AFL_NO_AFFINITY": "1",
+    "AFL_SKIP_CPUFREQ": "1",
+    "ENABLE_STATS_HEADER": "1",
+    "FUZZWARE_DISABLE_MODELING": "0",
+    "MKL_NUM_THREADS": "1",
+    "NUMEXPR_NUM_THREADS": "1",
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1",
+    "PRINT_CRASHES": "0",
+    "RAYON_NUM_THREADS": "1",
+    "WORKON_HOME": "/opt/artifact/SOAT"
+  },
+  "created_at": "2026-09-02T01:55:04+08:00",
+  "duration_seconds": 86400,
+  "elf_root": "/opt/artifact/benchmarks/drone_firmware",
+  "fuzzware_run_for": "00:24:00:00",
+  "incremental": true,
+  "jobs": 48,
+  "parallelism_cap": 24,
+  "per_tool_env": {
+    "fuzzware": {
+      "FUZZWARE_FORCE_POLLING_OBSERVER": "1",
+      "PYTHONPATH": "/opt/artifact/SOAT/scripts/fuzzware_polling_sitecustomize"
+    },
+    "multifuzz": {
+      "COVERAGE_MODE": "blocks",
+      "GHIDRA_SRC": "./ghidra",
+      "RUN_FOR": "86400s",
+      "SAVE_CRASH_LIMIT": "200",
+      "SAVE_HANG_LIMIT": "0",
+      "STATS_LOG_RATE": "60"
+    }
+  },
+  "run_root": "/opt/artifact/benchmarks/drone_firmware/firmware_audit/fuzz_campaign_20260902_formal",
+  "selected_targets": [
+    "ardupilot_CubeOrange_STM32H757",
+    "ardupilot_KakuteF7_STM32F745",
+    "ardupilot_MatekH743_STM32H743",
+    "ardupilot_Pixhawk1_STM32F427",
+    "ardupilot_Pixhawk4_STM32F765",
+    "ardupilot_Pixracer_STM32F405",
+    "betaflight_RP2350_RP2350B",
+    "betaflight_STM32F405_STM32F405",
+    "betaflight_STM32F411_STM32F411",
+    "betaflight_STM32H743_STM32H743",
+    "inav_ANYFCF7_STM32F745",
+    "inav_BETAFPVF435_AT32F435",
+    "inav_MATEKF405_STM32F405",
+    "inav_MATEKF722_STM32F722",
+    "inav_MATEKH743_STM32H743",
+    "inav_OMNIBUSF4_STM32F405",
+    "inav_PIXRACER_STM32F405",
+    "px4_fmu-v2_STM32F427",
+    "px4_fmu-v3_STM32F427",
+    "px4_fmu-v4pro_STM32F469",
+    "px4_fmu-v5_STM32F765",
+    "px4_fmu-v5x_STM32F765",
+    "px4_fmu-v6c_STM32H743",
+    "px4_fmu-v6x_STM32H753"
+  ],
+  "special_targets": {
+    "betaflight_RP2350_RP2350B": "ATTEMPTED this run (smoke skipped): Cortex-M33/TrustZone \u2014 expected fast-fail",
+    "smoke_fuzzware_failures_retried_once": [
+      "betaflight_STM32H743_STM32H743",
+      "inav_OMNIBUSF4_STM32F405",
+      "inav_PIXRACER_STM32F405"
+    ]
+  },
+  "tool_entrypoints": {
+    "fuzzware": "/opt/artifact/.virtualenvs/fuzzware/bin/fuzzware",
+    "multifuzz": "/opt/artifact/SOAT/MultiFuzz/target/release/hail-fuzz"
+  }
+}

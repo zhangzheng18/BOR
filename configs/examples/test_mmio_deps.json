@@ -1,0 +1,6 @@
+{
+  "firmware_path": "/opt/artifact/artifact/testcase/P2IM.Gateway.elf",
+  "entry_point": "0x800365d",
+  "total_bbs": 3972,
+  "mmio_dependencies": []
+}

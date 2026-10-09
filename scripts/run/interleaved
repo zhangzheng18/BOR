@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+export LSGEMU_CONFIG_FILE="${LSGEMU_CONFIG_FILE:-$ROOT/configs/lsgemu_config.yaml}"
+export PYTHONPATH="$ROOT${PYTHONPATH:+:$PYTHONPATH}"
+PYTHON="${PYTHON:-$ROOT/.venv/bin/python}"
+if [[ ! -x "$PYTHON" ]]; then
+  PYTHON=python3
+fi
+cd "$ROOT"
+exec "$PYTHON" -m lsgemu.cached_interleaved_runner "$@"

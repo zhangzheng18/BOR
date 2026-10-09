@@ -1,0 +1,35 @@
+# LSGEmu Python dependencies.
+#
+# Installed-version pins below reflect the current deployment environment where
+# they were available.  Optional packages are marked separately because the
+# External binaries such as Ghidra, Java, arm-none-eabi-*, llvm-*, readelf, nm,
+# objdump, and strings are documented in configs/lsgemu_config.example.yaml.
+
+# Core runtime
+capstone==5.0.7
+pyelftools==0.32
+PyYAML==6.0.3
+numpy==1.24.4
+requests==2.22.0
+tqdm==4.67.1
+
+# Evaluation/report generation
+matplotlib==3.7.5
+pandas>=1.5
+rich>=13
+
+# OpenAI-compatible LLM support.  The code also has a urllib/http fallback, but
+# installing these gives the intended client path for LLM.yaml-based runs.
+openai>=1.0.0
+httpx>=0.23
+pydantic>=2.0
+python-dotenv>=1.0
+
+# Optional symbolic/static analysis helpers used by legacy or comparison tools.
+angr>=9.2
+claripy>=9.2
+z3-solver>=4.12
+
+# Test/development helpers
+pytest>=7
+hypothesis>=6

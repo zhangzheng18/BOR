@@ -1,0 +1,133 @@
+# LSGEmu final packaged deployment config.
+#
+# This file is intentionally editable and machine-local.  It is loaded
+# automatically when running commands from src_final.  Override it with:
+#   python -m lsgemu.lsgemu --config /path/to/config.yaml <firmware>
+# or:
+#   export LSGEMU_CONFIG_FILE=/path/to/config.yaml
+
+schema: lsgemu.deployment_config.v1
+
+project:
+  source_root: /opt/artifact
+  # Upstream root keeps compatibility with the existing local testcase/data
+  # layout. Unicorn and Ghidra are configured explicitly below.
+  root: /opt/artifact
+  cache_dir: /opt/artifact/.lsgemu_cache
+  run_output_dir: /opt/artifact/.lsgemu_runs
+  temp_dir: /tmp
+
+python:
+  executable: python3
+  virtualenv: ${VIRTUAL_ENV}
+  pythonpath:
+    - /opt/artifact
+    - /opt/artifact/software/unicorn/bindings/python
+
+ghidra:
+  enabled: true
+  install_dir: /opt/artifact/software/ghidra
+  analyze_headless: /opt/artifact/software/ghidra/support/analyzeHeadless
+  java_home: ${JAVA_HOME}
+  xdg_config_home: /tmp/ghidra-xdg
+  default_timeout_seconds: 600
+
+unicorn:
+  use_system_unicorn: 0
+  local_python_bindings: /opt/artifact/software/unicorn/bindings/python
+  # This build contains Unicorn's code/block translation-cache invalidation
+  # fix for dynamic hook add/delete, which is required by replay stages.
+  local_build_dir: /opt/artifact/.local/unicorn-hookfix/lib
+  shared_library: /opt/artifact/.local/unicorn-hookfix/lib/libunicorn.so.2
+  ld_library_path_entry: /opt/artifact/.local/unicorn-hookfix/lib
+
+llm:
+  enabled: ${LSGEMU_ENABLE_LLM:-auto}
+  config_file: /opt/artifact/LLM.yaml
+  backend: openai_compatible
+  model: ${LSGEMU_LLM_MODEL:-qwen-plus}
+  base_url: ${OPENAI_BASE_URL}
+  api_key_env: OPENAI_API_KEY
+  request_timeout_seconds: 60
+
+svd:
+  paths: []
+
+datasets:
+  elfmultifuzz_root: /opt/artifact/benchmarks/elfmultifuzz
+  p2im_real_tests_root: /opt/artifact/artifact/testcase/real_tests
+  manual_mcu_root: /opt/artifact/target/MCU_bin_elf_single
+  manual_mcu_selected_root: /opt/artifact/target/MCU_bin_elf_single/mcu_type_firmware_selected
+  fuzzware_soat_root: /opt/artifact/SOAT/fuzzware
+  multifuzz_soat_root: /opt/artifact/SOAT/MultiFuzz
+
+run_profile:
+  environment:
+    LSGEMU_CONSOLE_PROGRESS: "1"
+    LSGEMU_PROGRESS_INTERVAL_SECONDS: "600"
+    LSGEMU_PROGRESS_COVERAGE_LIST_MODE: none
+    LSGEMU_LOOP_EXIT_HINTS: "1"
+    LSGEMU_ENABLE_MEMORY_WAIT_CLASSIFIER: "1"
+    LSGEMU_FAST_LOOP_ANALYSIS: "1"
+    LSGEMU_BRANCH_DEP_SNAPSHOT_MIN: "16"
+    LSGEMU_BRANCH_DEP_SNAPSHOT_MAX: "64"
+    LSGEMU_TARGETED_DIRECT_ROOT_FOCUS: "1"
+    LSGEMU_TARGETED_SWITCH_ROOT_SNAPSHOT_REPLAY: "1"
+    LSGEMU_TARGETED_SWITCH_ROOT_BUDGET: "64"
+    # Resource timing only: these do not prune snapshots, candidates, or BBs.
+    # Serialized external state is placed in an isolated
+    # output/.snapshot_store/<attempt>/ directory. Set to 0 for the historical
+    # all-RAM A/B mode.
+    LSGEMU_SNAPSHOT_DISK_BACKING: "1"
+    # RAM pages are content-interned; only unique pages hit the disk file, so
+    # the on-disk footprint stays small while cold anchors (r7 DFS 回退锚点)
+    # can resurrect pages after the in-RAM weak refs are collected.  Set to 0
+    # to restore the historical all-RAM page mode.
+    LSGEMU_SNAPSHOT_PAGE_DISK_BACKING: "1"
+    LSGEMU_SNAPSHOT_STATE_COMPRESSION: "1"
+    LSGEMU_SNAPSHOT_STATE_COMPRESSION_LEVEL: "1"
+    LSGEMU_SNAPSHOT_STATE_CACHE_DECODED: "0"
+    LSGEMU_LOOP_BB_HISTORY_LIMIT: "512"
+    LSGEMU_LOOP_REGISTER_HISTORY_LIMIT: "32"
+    LSGEMU_LOOP_MMIO_ACCESS_PC_LIMIT: "256"
+    LSGEMU_EMULATOR_BB_HISTORY_LIMIT: "8192"
+    LSGEMU_EXECUTION_TRACE_HISTORY_LIMIT: "8192"
+    # Diagnostic access tails retain recent evidence while exact occurrence
+    # counters and latest-value indexes remain lossless.
+    LSGEMU_MMIO_ACCESS_HISTORY_LIMIT: "16384"
+    LSGEMU_MEMORY_ACCESS_HISTORY_LIMIT: "16384"
+    LSGEMU_ENHANCED_MMIO_HISTORY_LIMIT: "16384"
+    LSGEMU_REGISTER_TRACER_MMIO_HISTORY_LIMIT: "16384"
+    # Scheduler reachability is a recomputable heuristic cache. Values are
+    # packed address arrays; this bounds retained payload, not candidate
+    # generation or coverage.
+    LSGEMU_STATIC_REACHABILITY_CACHE_MAX_BYTES: "134217728"
+    LSGEMU_TEMP_EMULATOR_GC_INTERVAL: "64"
+    LSGEMU_TEMP_EMULATOR_MALLOC_TRIM_INTERVAL: "64"
+    LSGEMU_TEMP_EMULATOR_RSS_TRIM_THRESHOLD_MIB: "256"
+    # Collect closed-emulator cycles before a pressure-triggered trim.
+    LSGEMU_TEMP_EMULATOR_GC_ON_PRESSURE: "1"
+
+evaluation:
+  default_rq1_minutes: 1440
+  default_rq2_minutes: 60
+  default_rq3_minutes: 30
+  safe_jobs_default: 1
+  scheduler:
+    # This host has about 94 GiB RAM. Preserve roughly 20% for the OS, page
+    # cache, Ghidra, and report finalization. Long-run pilots must justify any
+    # increase above max_safe_jobs.
+    max_safe_jobs: 8
+    initial_jobs: 2
+    ramp_seconds: 300
+    min_free_memory_gib: 19
+    per_job_memory_gib: 8
+    peak_multiplier: 1.25
+    max_swap_used_gib: 4
+    kill_below_free_memory_gib: 19
+    kill_above_swap_used_gib: 8
+
+crash_detection:
+  config_file: /opt/artifact/fuzzengine/crash_detector_config.example.json
+  treat_unmapped_mmio_as_artifact: true
+  treat_unmapped_configured_memory_as_artifact: true

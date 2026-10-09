@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+.lsgemu_runs/
+.lsgemu_cache/
+tmp/
+*.log
+.DS_Store

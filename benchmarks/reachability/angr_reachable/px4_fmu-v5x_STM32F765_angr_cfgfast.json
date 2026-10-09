@@ -1,0 +1,14 @@
+{
+  "schema": "lsgemu.angr_reachability.v1",
+  "elf_path": "/opt/artifact/benchmarks/drone_firmware/px4_fmu-v5x_STM32F765.elf",
+  "elf_sha256": "51e79a9eac697da984fb2eee020b3157b6f9a8721004cb18cc5ccb2539b253dc",
+  "entry": 134265696,
+  "entry_hex": "0x800bb60",
+  "entry_source": "e_entry",
+  "method": "cfg_fast",
+  "degrade_reason": "data_references_disabled_workaround_irsb_none",
+  "angr_version": "9.2.14",
+  "node_count": 139941,
+  "bb_count": 139937,
+  "elapsed_seconds": 319.73364251599924
+}

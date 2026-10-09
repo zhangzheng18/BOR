@@ -1,0 +1,14 @@
+# LLM settings — DeepSeek (OpenAI-compatible)
+llm:
+  provider: "openai"
+  # 用户指定模型名。服务端会回显规范名 deepseek-flash（两者是同一模型的
+  # 别名关系）；GET /v1/models 只列出 deepseek-flash / deepseek-v4-pro，
+  # 该限时别名存在下线风险，但用户明确要求使用此名。
+  model: "deepseek-v4.1-flash-expires-on-0910"
+  api_base: "https://api.deepseek.com/v1"
+  api_key_env: "DEEPSEEK_API_KEY"
+  # 实测 API 接受 max_tokens ≥ 262144。真实 campaign 任务的推理链观测到
+  # ~29000 字符（约 1.5-2 万 token），16000 会被思维链耗尽导致 content
+  # 为空（finish_reason=length）；65536 留 2x 以上余量。
+  max_tokens: 65536
+  temperature: 0.0

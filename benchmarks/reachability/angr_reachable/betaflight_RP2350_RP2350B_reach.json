@@ -1,0 +1,16 @@
+{
+  "schema": "lsgemu.angr_reachability.v1",
+  "elf_path": "/opt/artifact/benchmarks/drone_firmware/betaflight_RP2350_RP2350B.elf",
+  "entry": 268435789,
+  "entry_hex": "0x1000014d",
+  "entry_source": "e_entry",
+  "method": "cfg_emulated",
+  "degrade_reason": null,
+  "angr_version": "9.2.14",
+  "node_count": 1,
+  "bb_count": 1,
+  "elapsed_seconds": 2.4012772208079696,
+  "bb_addrs": [
+    "0x1000014c"
+  ]
+}
